@@ -15,7 +15,7 @@ if __name__ == '__main__':
   rdd = Dataset.from_source("telemetry" 
     ).where( 
         docType='main', 
-        appUpdateChannel="nightly" 
+        appUpdateChannel="nightly", 
         submissionDate="20180301"
     ).records(sc) 
   
