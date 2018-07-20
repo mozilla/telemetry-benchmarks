@@ -12,12 +12,14 @@ if __name__ == '__main__':
  
   print("\nTesting performance with Default Behavior and Main Pings data...") 
  
-  fs_rdd = Dataset.from_source("telemetry" 
+  rdd = Dataset.from_source("telemetry" 
     ).where( 
         docType='main', 
         appUpdateChannel="nightly" 
+        submissionDate="20180301"
     ).records(sc) 
- 
+  
+  print(rdd.count())
   sc.stop() 
   endTime = datetime.now() 
   # used to measure performance in terms of runtime of program 

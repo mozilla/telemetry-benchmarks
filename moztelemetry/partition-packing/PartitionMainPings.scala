@@ -18,7 +18,7 @@ object PartitionMainPings {
     println()
     println("Testing performance with Partition Algorithm and Main Pings data...")
 
-    val fs_rdd = {
+    val rdd = {
       Dataset("telemetry")
         .where("sourceName") {
           case "telemetry" => true
@@ -29,10 +29,13 @@ object PartitionMainPings {
         .where("appUpdateChannel") {
           case "nightly" => true
         }
+        .where("submissionDate") {
+          case "20180301" => true
+        }
         .records(numPartitions)
     }
 
-    fs_rdd.first().fields
+    println(rdd.count())
     sc.stop()
     val endTime = System.currentTimeMillis()
 

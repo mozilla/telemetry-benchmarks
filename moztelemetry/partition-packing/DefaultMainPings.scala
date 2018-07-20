@@ -16,7 +16,7 @@ object DefaultMainPings {
     println()
     println("Testing performance with Default Behavior and Main Pings data...")
 
-    val fs_rdd = {
+    val rdd = {
       Dataset("telemetry")
         .where("sourceName") {
           case "telemetry" => true
@@ -27,10 +27,12 @@ object DefaultMainPings {
         .where("appUpdateChannel") {
           case "nightly" => true
         }
+        .where("submissionDate") {
+          case "20180301" => true
+        }
         .records()
     }
-
-    fs_rdd.first().fields
+    println(rdd.count())
     sc.stop()
     val endTime = System.currentTimeMillis()
 
