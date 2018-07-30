@@ -9,4 +9,4 @@ To include benchmark tests:
 2. Include a README describing the tests, analysis, and sample information about expected outcomes of the tests. 
 3. Upload the tests.
 
-Tests should be formatted so that they can easily be run. Preferably, one command or script should be able to execute them. Make sure all dependencies are included.
+Benchmark Tests should be formatted so that they can easily be run. Preferably, one command or script should be able to execute them. Make sure all dependencies are included.
