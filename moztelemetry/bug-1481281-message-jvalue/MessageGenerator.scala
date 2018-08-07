@@ -1,17 +1,57 @@
 package com.mozilla.benchmark.moztelemetry.bug1481281
 
 import com.mozilla.telemetry.heka.{Header, Message, RichMessage}
-import java.io.{ByteArrayOutputStream, BufferedOutputStream, FileOutputStream}
-import org.rogach.scallop._
-import scala.util.Random
-import java.util.UUID.randomUUID
-import org.json4s._
 import org.json4s.JsonDSL._
+import org.json4s._
 import org.json4s.jackson.JsonMethods._
+import org.rogach.scallop._
+
+import java.io.{File, FileOutputStream, BufferedOutputStream, ByteArrayOutputStream}
+import java.util.UUID.randomUUID
+import scala.util.Random
 
 object MessageGenerator {
   val keyLength = 16;
   val valueLength = 64;
+
+  private class Conf(args: Seq[String]) extends ScallopConf(args) {
+    val numMessages = opt[Int](required = true)
+    val path = opt[File](required = true)
+    val width = opt[Int](default = Some(5))
+    val depth = opt[Int](default = Some(3))
+    val branchFactor = opt[Int](default = Some(5))
+    val isPayload = opt[Boolean](default = Some(false))
+    val partitionSize = opt[Long](descr = "Partition size in MB", default = Some(256))
+    validateFileDoesNotExist(path)
+    verify()
+  }
+
+  def main(args: Array[String]) {
+    val opts = new Conf(args)
+    opts.path().mkdir()
+
+    // Generate an infinite stream of data, see this blog post for use of constructing a stream through #::
+    // https://bradcollins.com/2015/08/29/scala-saturday-the-stream-take-method/
+    def generate = generateMessage(opts.width(), opts.depth(), opts.branchFactor(), opts.isPayload())
+    def records: Stream[Message] = generate #:: records
+
+    // How many messages do we write to a single partition
+    val sample = generate.toJValue
+    val sampleSize = compact(sample).length
+    val messagesPerPartitions = (opts.partitionSize() * Math.pow(10, 6) / sampleSize).toInt
+
+    println(s"Writing ${opts.numMessages()} messages, ${messagesPerPartitions} per partition")
+    // Keep writing messages as long as there are more than fit into a single partition
+    var curPartition = 0
+    var toWrite: Int = opts.numMessages()
+    while (toWrite > 0) {
+      val numMessages = if (toWrite < messagesPerPartitions) { toWrite } else { messagesPerPartitions }
+      val file = new File(opts.path(), s"part_${curPartition}.heka")
+      writeBuffer(records.take(numMessages).toSeq, file.getPath())
+      curPartition += 1
+      toWrite -= numMessages
+    }
+  }
 
   /** Generate a Message for testing garbage collection between `toJValue` and `fieldsAsMap`.
     *
@@ -23,17 +63,23 @@ object MessageGenerator {
     */
   def generateMessage(width: Int, depth: Int = 2, branchFactor: Int = 2, isPayload: Boolean = false): Message = {
     val fieldsMap =
-      if (isPayload) { Map[String, Any]() }
+      if (isPayload) {
+        Map[String, Any]()
+      }
       else {
         Seq.fill(width)(
           Random.alphanumeric.take(keyLength).mkString,
-          compact(generateNodes(depth-1, branchFactor))
+          compact(generateNodes(depth - 1, branchFactor))
         ).toMap
       }
 
     val payload =
-      if (isPayload) { Some(compact(generateNodes(depth, branchFactor))) }
-      else { None }
+      if (isPayload) {
+        Some(compact(generateNodes(depth, branchFactor)))
+      }
+      else {
+        None
+      }
 
     RichMessage(
       uuid = randomUUID().toString,
@@ -49,7 +95,7 @@ object MessageGenerator {
     * @param branchFactor
     * @return
     */
-  def generateNodes(depth: Int, branchFactor :Int): JValue = {
+  def generateNodes(depth: Int, branchFactor: Int): JValue = {
     val map =
       if (depth == 0) {
         // leaf nodes
@@ -62,7 +108,7 @@ object MessageGenerator {
         // branch
         Seq.fill(branchFactor)(
           Random.alphanumeric.take(keyLength).mkString,
-          generateNodes(depth-1, branchFactor)
+          generateNodes(depth - 1, branchFactor)
         ).toMap
       }
 
@@ -74,8 +120,8 @@ object MessageGenerator {
     * See the moztelemetry testing harness for more details.
     * https://github.com/mozilla/moztelemetry/blob/8ce975c38db9a336f342007605d6a053fe16a631/src/test/scala/com/mozilla/telemetry/heka/Resources.scala#L50-L70
     *
-    * @param message  A java object representing the heka-protobuf file
-    * @return         An array of bytes representing the serialized framed message
+    * @param message A java object representing the heka-protobuf file
+    * @return An array of bytes representing the serialized framed message
     */
   def framedMessage(message: Message): Array[Byte] = {
     val baos = new ByteArrayOutputStream()
@@ -92,43 +138,13 @@ object MessageGenerator {
     baos.write(bMessage, 0, bMessage.size)
     baos.toByteArray
   }
-  // TODO: https://stackoverflow.com/questions/17488534/create-a-file-from-a-bytearrayoutputstream
-}
 
-
-object Main {
-  private class Conf(args: Seq[String]) extends ScallopConf(args) {
-    val numMessages = opt[Int](required = true)
-    val path = opt[String](required = true)  // TODO: use the Path type and verify it's an empty folder
-    val width = opt[Int](default = Some(5))
-    val depth = opt[Int](default = Some(3))
-    val branchFactor = opt[Int](default = Some(5))
-    val isPayload = opt[Boolean](default = Some(false))
-    val partitionSize = opt[Int](default = Some(1 << 31))
-    verify()
-  }
-
-  def writeBuffer(records: Seq[Array[Byte]], path: String): Unit = {
-    val buf = records.foldLeft(Array[Byte]())(_ ++ _)
+  def writeBuffer(records: Seq[Message], path: String): Unit = {
+    println(s"Writing ${path} to disk")
     val bos = new BufferedOutputStream(new FileOutputStream(path))
-    bos.write(buf)
+    for (record <- records) {
+      bos.write(framedMessage(record))
+    }
     bos.close()
-    println(s"Wrote ${path} to disk")
   }
-
-  def main(args: Array[String]) {
-    val opts = new Conf(args)
-
-    def generate = MessageGenerator.generateMessage(opts.width(), opts.depth(), opts.branchFactor(), opts.isPayload())
-
-    val sample = generate.toJValue
-    println("Printing a sample generated ping")
-    println(pretty(sample))
-
-    // TODO: write many partitions
-    val records = Seq.fill(opts.numMessages())(generate).map(MessageGenerator.framedMessage(_));
-    // TODO: add the partition number to the filename
-    writeBuffer(records, opts.path())
-  }
-
 }
