@@ -20,7 +20,7 @@ object MessageGenerator {
     val width = opt[Int](default = Some(5))
     val depth = opt[Int](default = Some(3))
     val branchFactor = opt[Int](default = Some(5))
-    val isPayload = opt[Boolean](default = Some(false))
+    val isExtracted = opt[Boolean](default = Some(true))
     val partitionSize = opt[Long](descr = "Partition size in MB", default = Some(256))
     validateFileDoesNotExist(path)
     verify()
@@ -32,7 +32,7 @@ object MessageGenerator {
 
     // Generate an infinite stream of data, see this blog post for use of constructing a stream through #::
     // https://bradcollins.com/2015/08/29/scala-saturday-the-stream-take-method/
-    def generate = generateMessage(opts.width(), opts.depth(), opts.branchFactor(), opts.isPayload())
+    def generate = generateMessage(opts.width(), opts.depth(), opts.branchFactor(), opts.isExtracted())
     def records: Stream[Message] = generate #:: records
 
     // How many messages do we write to a single partition
@@ -61,30 +61,23 @@ object MessageGenerator {
     * @param isPayload
     * @return
     */
-  def generateMessage(width: Int, depth: Int = 2, branchFactor: Int = 2, isPayload: Boolean = false): Message = {
+  def generateMessage(width: Int, depth: Int = 2, branchFactor: Int = 2, isExtracted: Boolean = true): Message = {
     val fieldsMap =
-      if (isPayload) {
-        Map[String, Any]()
+      if (isExtracted) {
+        val base = Seq(("submission", "{}"))
+        val extracted = Seq.fill(width)(
+            s"submission.${Random.alphanumeric.take(keyLength).mkString}",
+            compact(generateNodes(depth - 1, branchFactor)))
+        (base ++ extracted).toMap
       }
       else {
-        Seq.fill(width)(
-          Random.alphanumeric.take(keyLength).mkString,
-          compact(generateNodes(depth - 1, branchFactor))
-        ).toMap
-      }
-
-    val payload =
-      if (isPayload) {
-        Some(compact(generateNodes(depth, branchFactor)))
-      }
-      else {
-        None
+        Map("submission" -> compact(generateNodes(depth, branchFactor)))
       }
 
     RichMessage(
       uuid = randomUUID().toString,
       fieldsMap = fieldsMap,
-      payload = payload
+      payload = None
     )
   }
 
