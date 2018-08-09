@@ -8,23 +8,6 @@ jarPath=`ls target/scala-*/*.jar`
 time spark-submit \
     --master yarn \
     --deploy-mode client \
-    --class com.mozilla.telemetry.DefaultMainPings \
+    --class com.mozilla.telemetry.PartitionPerformance \
     "$jarPath"
-
-time spark-submit \
-    --master yarn \
-    --deploy-mode client \
-    --class com.mozilla.telemetry.PartitionMainPings \
-    "$jarPath"
-
-unset PYSPARK_DRIVER_PYTHON
-time spark-submit \
-    --master yarn \
-    --deploy-mode client \
-    DefaultMainPings.py
-
-time spark-submit \
-    --master yarn \
-    --deploy-mode client \
-    PartitionMainPings.py
-
+    --docType main --channel nightly --timestamp 20180301 --minPartitions 6

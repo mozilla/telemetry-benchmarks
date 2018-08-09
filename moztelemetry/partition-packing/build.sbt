@@ -12,8 +12,8 @@ lazy val root = (project in file(".")).
 
     // Spark libs
     libraryDependencies += "org.apache.spark" %% "spark-core" % sparkVersion,
-    libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion
-
+    libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion,
+    libraryDependencies += "org.rogach" %% "scallop" % "3.1.3"
 )
 test in assembly := {}
 
