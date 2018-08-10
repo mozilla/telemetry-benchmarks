@@ -11,8 +11,8 @@ import java.util.UUID.randomUUID
 import scala.util.Random
 
 object MessageGenerator {
-  val keyLength = 16;
-  val valueLength = 64;
+  val keyLength = 4;
+  val valueLength = 4;
 
   private class Conf(args: Seq[String]) extends ScallopConf(args) {
     val numMessages = opt[Int](required = true)
