@@ -9,7 +9,7 @@ import org.apache.spark.sql.SparkSession
 import org.rogach.scallop.ScallopConf
 
 object PartitionPerformance {
-  def submitOnce(docType: String, channel: String, timestamp:String, minPartitions: Int) {
+  def submitOnce(docType: String, channel: String, timestamp:String, minPartitions: Option[Int]) {
     val startTime = System.currentTimeMillis()
     val spark = SparkSession.builder.appName("ecole").getOrCreate()
     implicit val sc = spark.sparkContext
@@ -20,17 +20,18 @@ object PartitionPerformance {
           case "telemetry" => true
         }
         .where("docType") {
-          case docType => true
+          case dt => dt == docType
         }
         .where("appUpdateChannel") {
-          case channel => true
+          case ch => ch == channel
         }
         .where("submissionDate") {
-          case timestamp => true
+          case t => t == timestamp
         }
-        .records()
+        .records(minPartitions=minPartitions)
     }
     println(rdd.count())
+    println(rdd.getNumPartitions)
     sc.stop()
   }
 
@@ -39,10 +40,9 @@ object PartitionPerformance {
       val docType = opt[String]("docType", required=true)
       val channel = opt[String]("channel", required=true)
       val timestamp = opt[String]("timestamp", required=true)
-      val minPartitions = opt[Int]("minPartitions", default=Some(0))
+      val minPartitions = opt[Int]("minPartitions", default=None)
       verify()
     }
-    submitOnce(opts.docType(), opts.channel(), opts.timestamp(), opts.minPartitions())
+    submitOnce(opts.docType(), opts.channel(), opts.timestamp(), opts.minPartitions.toOption)
   }
 }
-
