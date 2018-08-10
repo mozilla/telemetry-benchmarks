@@ -59,19 +59,32 @@ $ ./run_main_summary.sh
 
 ## Results
 
+### Tree-flattening microbenchmark
+
+The datasets in the results are generated with the following parameters. These can be adjusted to
+increase the total number of objects that are created when deserializing.
+
 dataset | width | depth | branch factor | total leaf nodes
 ---|---|---|---|---
 baseline | 5 | 3 | 5 | 125
 wide | 10 | 4 | 10 | 10,000
 
+The baseline and wide datasets have differing number of rows. Within each dataset, the map and jvalue
+methods can be compared relative to each other.
 
 dataset  | method | userland (sec) | kernel (sec) | elapsed (mm:ss)
 ---------|--------|----------|--------|---
 baseline | map    | 237.67   | 2.31   | 2:04.48 
 baseline | jvalue | 282.86   | 3.63   | 2:33.80 
 wide     | map    | 672.44   | 2.89   | 5:47.62 
-wide     | jvalue | 1367.46  | 4.54   | 12:12.43 
+wide     | jvalue | 1367.46  | 4.54   | 12:12.43
 
+The map method has less overhead in this context. In the baseline, the difference is fairly small. When
+the number of parsed objects is increased to 10,000 nodes per row, the timing difference is more apparent. 
+
+### MainSummaryView benchmark
+
+The job is run twice with each revision. The JValue method was introduced in [this PR](https://github.com/mozilla/telemetry-batch-view/pull/377).
 
 method | gc | userland (sec) | kernel (sec) | elapsed (mm:ss)
 ---|---|---|---|---
@@ -80,21 +93,54 @@ jvalue | g1 | 68.33 | 9.15  |6:17.00
 map | cms | 71.94 | 8.89 | 14:56.84
 map | g1 | 70.51 | 9.36 | 16:43.99
 
+The JValue method is consistently faster than the original `fieldsAsMap` methodology. This timing corresponds to the
+overall GC time measured in the Spark UI dashboard. The following graphs show heap usage over the course of the
+jobs. 
+
 #### toJValue with Concurrent Mark Sweep
 ![jvalue-cms](images/jvalue-cms.png)
+
+The CMS garbage collector shows a steady increase in the heap usage over the course of the application.
+Heap usage reaches 2000 MB after 5 minutes.
 
 #### fieldsAsMap with Concurrent Mark Sweep
 ![map-cms](images/map-cms.png)
 
+The heap usage follows the same pattern as the CMS with the `toJValue` method. However, the heap reaches
+2000 MB after 14 minutes. 
+
 #### toJValue with G1
 ![jvalue-g1](images/jvalue-g1.png)
+
+G1 has a small periodic sawtooth behavior that reaches a peak of 2000 MB. This method performs better than
+CMS on the same method.
+
 
 #### fieldsAsMap with G1
 ![map-cms](images/map-g1.png)
 
+G1 with the Map method has a smaller sawtooth period than the the JValue method. The garbage collector more
+frequently clears the heap of unused objects.
 
 ## Discussion
+
+There are no clear performance wins for the `Message.toJValue` method in the microbenchmarks. It's unclear what
+conditions need to be met in order to produce the behavior seen in `MainSummaryView`. The `JValue` method
+is more concise than it's `Map[String, Any]` equivalent and has the nice property of logically reconstructing 
+the ping.
+
+For `MainSummaryView`, the logs collected from Yarn seem to point to object management and improved
+garbage collection for increased job efficiency. The GC hours for the JValue method is smaller than the
+Map method (1.8h vs 4h), but the GC logs for CMS looks equivalent. The more frequent sawtoothing of G1 in `fieldsAsMap`
+is interesting because it implies that the heap is being filled more frequently. The steady increase in heap usage in the
+CMS graph is likely the overhead required to keep track of the RDD.
+
+Tuning the garbage collector for batch data jobs is overkill. However, understanding that the garbage collector
+can significantly impact the performance of Spark jobs is something that should be kept in mind.
+
 ## Resources
 
-https://databricks.com/blog/2015/05/28/tuning-java-garbage-collection-for-spark-applications.html
-https://spark.apache.org/docs/latest/tuning.html
+* [Tuning Java Garbage Collection for Apache Spark Applications](https://databricks.com/blog/2015/05/28/tuning-java-garbage-collection-for-spark-applications.html)
+* [Tuning Spark](https://spark.apache.org/docs/latest/tuning.html)
+* [Getting Started with the G1 Garbage Collector](http://www.oracle.com/technetwork/tutorials/tutorials-1876574.html)
+* [GCEasy - Analysis of GC logs](http://gceasy.io/index.jsp)
