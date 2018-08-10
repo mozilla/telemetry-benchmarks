@@ -33,12 +33,66 @@ data larger than the heap.
 
 1. Generate two datasets, a baseline with 5^3 leaf nodes and a wide set with 10^4 leaf nodes, stored as Heka protobuf
 2. Run the tree flattening application using both the `toJValue` and `fieldsAsMap` methods on the `Message` object
-3. Collect user, system, and wallclock timings
+3. Collect timings
 
+Refer to the deserialization benchmark in this repo.
 
+```bash
+$ ./run_deserialization.sh
+```
 
+In the second benchmark, we rerun `MainSummaryView` using two revisions in the source tree. The first revision is a
+snapshot of the job prior to the use of `Messsage.toJValue`. The second revision uses `JValues` from the start.
+
+1. Build the assembly jars of the two revisions, with a patch to enable equally-sized-partition packing
+2. Run `MainSummaryView` on a single day of Firefox nightly
+    - Repeat for each jar using the Concurrent Mark Sweep and G1 methods
+3. Collect timings
+4. Request the GC logs from yarn
+
+Refer to the main summary benchmark.
+
+```
+# SSH into an EMR spark cluster and change to a working directory
+$ ./run_main_summary.sh
+```
 
 ## Results
+
+dataset | width | depth | branch factor | total leaf nodes
+---|---|---|---|---
+baseline | 5 | 3 | 5 | 125
+wide | 10 | 4 | 10 | 10,000
+
+
+dataset  | method | userland (sec) | kernel (sec) | elapsed (mm:ss)
+---------|--------|----------|--------|---
+baseline | map    | 237.67   | 2.31   | 2:04.48 
+baseline | jvalue | 282.86   | 3.63   | 2:33.80 
+wide     | map    | 672.44   | 2.89   | 5:47.62 
+wide     | jvalue | 1367.46  | 4.54   | 12:12.43 
+
+
+method | gc | userland (sec) | kernel (sec) | elapsed (mm:ss)
+---|---|---|---|---
+jvalue | cms | 71.43 | 8.92 | 8:38.81 
+jvalue | g1 | 68.33 | 9.15  |6:17.00
+map | cms | 71.94 | 8.89 | 14:56.84
+map | g1 | 70.51 | 9.36 | 16:43.99
+
+#### toJValue with Concurrent Mark Sweep
+![jvalue-cms](images/jvalue-cms.png)
+
+#### fieldsAsMap with Concurrent Mark Sweep
+![map-cms](images/map-cms.png)
+
+#### toJValue with G1
+![jvalue-g1](images/jvalue-g1.png)
+
+#### fieldsAsMap with G1
+![map-cms](images/map-g1.png)
+
+
 ## Discussion
 ## Resources
 
