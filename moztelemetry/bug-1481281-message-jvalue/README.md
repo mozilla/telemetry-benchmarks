@@ -4,52 +4,38 @@
 
 ## Background
 
-Spark runs on the Java Virtual Machine and inherits many of it's runtime characteristics. One issue that should be
-on the back of our minds is the management of objects when using the RDD api. Since we generally process data on the
-order of 10^8 rows on some of our larger jobs, we should take the GC into consideration.
+Spark runs on the Java Virtual Machine and inherits some it's runtime characteristics. The object lifecycle is opaque
+in the DataFrame API, but becomes more of a concern when using the lower level RDD API. Tuning the garbage collector
+and being mindful of the underlying VM can improve performance.
 
-The main use-case of the RDD api is working with semi-unstructured data in the form of JSON and Heka data. 
-In `MainSummaryView`, binary data containing json is transformed and flattened into a format that can be converted
-into a DataFrame. This provides a cleaned up view of the data that can written to parquet and processed across our
-toolchain. One of the steps in the process involves deserializing the data into a datastructure we can process.
+Our general use-case of the RDD API is working with semi-unstructured data represented as JSON and Heka. 
+In `MainSummaryView`, binary data containing JSON is transformed and flattened into a format that can be converted
+into a DataFrame. This conversion of semi-unstructured to structured data is done by serializing data using an in-memory
+object representation.
 
-The original way of processing this data map the data to a field and parse each part individually. As part of unifying
-the extracted and unextracted documents into a single logical data-structure, it was found that performance 
-of data processing increased by a significant margin.
+In [Bug 1419116](https://bugzilla.mozilla.org/show_bug.cgi?id=1419116), the `Message.toJValue` method was added for
+abstracting access to the full JSON document from the underlying storage. This is similar to how the python implementation
+of the library works. The micro-benchmarks showed that there was overhead in creating this view. When the method was 
+used in `MainSummaryView`, the overall time decreased by a factor of 1.5-2.0x. 
+[Bug 1436850](https://bugzilla.mozilla.org/show_bug.cgi?id=1436850) 
 
-One likely source of this performance increase is the decrease in the number of objects created during the function
-runtime. A micro-benchmark of this job showed that while the the performance of constructing a single JValue structure
-was on average 30x slower, it created 6x less objects. 
+The cause of the improvement is hard to pin down, but indicators from the Spark UI point to the decreased load on the
+garbage collector. In this benchmark, we perform another set of micro-benchmarks and re-run the `MainSummaryView` jobs
+using alternative garbage collection methods. 
 
 ## Experimental Setup
 
-```bash
-sbt "runMain com.mozilla.benchmark.moztelemetry.bug1481281.MessageGenerator \
-    --num-messages 100000 \
-    --width 5 \
-    --depth 3 \
-    --branch-factor 5 \
-    --path test-extracted-w5d3b5"
+This benchmark is split into two separate parts. The first is a micro-benchmark that is meant to be run on Spark through
+the moztelemetry API. JSON data in the shape of a tree is generated in `MessageGenerator`. The number of nodes in the
+resulting Heka data-set can be controlled as parameters in the generator. The data is then fed into a Spark application
+that performs tree unnesting to create a flat data structure. The goal of this benchmark is to see how Spark reacts with
+data larger than the heap.
 
-sbt "runMain com.mozilla.benchmark.moztelemetry.bug1481281.MessageGenerator \
-    --num-messages 500 \
-    --width 10 \
-    --depth 4 \
-    --branch-factor 10 \
-    --path test-extracted-w10d4b10"
-```
+1. Generate two datasets, a baseline with 5^3 leaf nodes and a wide set with 10^4 leaf nodes, stored as Heka protobuf
+2. Run the tree flattening application using both the `toJValue` and `fieldsAsMap` methods on the `Message` object
+3. Collect user, system, and wallclock timings
 
-```bash
-spark-submit \
-    --master local[*] \
-    --deploy-mode client \
-    --class com.mozilla.benchmark.moztelemetry.bug1481281.BenchDeserialization \
-    target/scala-2.11/message-jvalue-assembly-1.0.jar \
-    --path test-data/
-```
 
-1. Generate data with a particular shape
-2. Run the benchmark on a Spark instance, collect the garbage collection timings
 
 
 ## Results
