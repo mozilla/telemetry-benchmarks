@@ -47,6 +47,7 @@ function bench {
         --deploy-mode client \
         --class com.mozilla.telemetry.views.MainSummaryView  \
         --conf "spark.driver.extraJavaOptions=${options}" \
+        --conf "spark.executor.extraJavaOptions=${options}" \
         ${jar_path}/${jar_name}.jar \
         --from ${date} --to ${date} \
         --bucket telemetry-test-bucket \
@@ -71,5 +72,7 @@ while read line
 do
     app=`echo $line | cut -f1 -d' '`
     name=`echo $line | cut -f2 -d' '`
-    yarn logs -applicationId ${app} > "logs/gc_$name.txt"
+    filename="logs/gc_$name.txt"
+    yarn logs -applicationId ${app} > ${filename}
+    gzip ${filename}
 done < logs/mapping.txt
