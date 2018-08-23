@@ -10,7 +10,7 @@ future.
 We want to display outcomes uniformly. Each Benchmark folder should contain a
 README that describes the `Background`, `Setup`, `Results`, and `Discussion`
 for the process being analyzed. Each folder should also include files that can
-allow users to replicate the benchmarks. 
+allow users to replicate the benchmarks.
 
 ## Contribute:
 
