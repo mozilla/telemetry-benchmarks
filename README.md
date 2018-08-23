@@ -1,6 +1,16 @@
 # Benchmarks
 
-Benchmarks allow for reproducible measurements of how well different processes run within Mozilla Telemetry. They are used to test performance of Telemetry tools with experimental approaches to help determine improvements in the future. The goal is to be able to place tests for different processes here in order to compare them to related results, to prove that improvements occur as we improve on tools for data science. The repository contains tests in both Scala and Python. Results of running the tests are provided with each group of tests in order to demonstrate expected outcomes. Instructions are also provided in order to replicate the results.
+Benchmarks allow for reproducible measurements of how well different processes
+run within Mozilla Telemetry. They are used to test performance of Telemetry
+tools. The goal is to use benchmarks to help determine improvements in the
+future.
+
+## Expectations for Experiments
+
+We want to display outcomes uniformly. Each Benchmark folder should contain a
+README that describes the `Background`, `Setup`, `Results`, and `Discussion`
+for the process being analyzed. Each folder should also include files that can
+allow users to replicate the benchmarks. 
 
 ## Contribute:
 

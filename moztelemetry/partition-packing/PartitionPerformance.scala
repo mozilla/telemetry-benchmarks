@@ -30,11 +30,10 @@ object PartitionPerformance {
         }
         .records(minPartitions=minPartitions)
     }
-    println(rdd.count())
-    println(rdd.getNumPartitions)
+    println(s"Number of rows of RDD: ${rdd.count()}")
+    println(s"Number of partitions used: ${rdd.getNumPartitions}")
     sc.stop()
   }
-
   def main(args: Array[String]) {
     val opts = new ScallopConf(args) {
       val docType = opt[String]("docType", required=true)

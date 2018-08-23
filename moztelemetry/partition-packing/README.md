@@ -1,6 +1,14 @@
 # Partition Packing Performance Measures
 
-This group of tests measures loading strategies for moztelemetry datasets. Partitions are made according to two different strategies: default behavior and equally sized groups.
+This group of tests measures loading strategies for moztelemetry datasets. Partitions are made according to two different strategies, default behavior and equally sized groups.
+
+## Background:
+We set up the tests in Scala and Python and compare the results of default
+behavior and equally sized groups in each language. The tests measure how long
+it takes to partition the data. Dataset, channel, the submission date are all
+variables. For the partition strategy specifically, we also vary the number of
+partitions. It is possible to run the tests with the provided Bash script, as
+well as manually on the command line.
 
 ## How to Run:
 
@@ -11,12 +19,15 @@ This group of tests measures loading strategies for moztelemetry datasets. Parti
 3. `cd /mnt/var/` from the home directory. Clone this repo into the directory. Spark jobs will run much faster from this directory compared to the home directory.
 
 ### To run with Bash script:
-Type `./run.sh` to execute the Scala test. The Bash script runs the test with `core` for docType, `nightly` for channel, '20180301` for timestamp, and `6` for minPartitions.
+Type `./run.sh` to execute the Scala test. The Bash script runs the test with `core` for docType, `nightly` for channel, `20180301` for timestamp, and `6` for minPartitions.
 
 ### To run mannually:
 1. Determine which docType, channel, timestamp, and how many minPartitions are
    desired for the test.
 2. Run the command `spark submit --master yarn --deploy-mode client --class com.mozilla.telemetry.PartitionPerformance <jar path> --docType <docType> --channel <channel>  --timestamp <timestamp> --minPartitions <minParitiions>`
+
+## Expected Results:
+
 
 ## Note:
 Python tests still need to be modified. Soon both Python and Scala tests will
