@@ -23,7 +23,7 @@ do
         --deploy-mode client \
         --class com.mozilla.celemetry.PartitionPerformance \
         "$jarPath" \
-        --docType main --channel nightly --timestamp 20180301 --minPartitions 0
+        --docType main --channel nightly --timestamp 20180301
 done
 echo "Performance of equal partitions for Python: " >> ~/python_performance.txt
 for run in {1..10}
