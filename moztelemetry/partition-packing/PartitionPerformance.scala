@@ -9,7 +9,7 @@ import org.apache.spark.sql.SparkSession
 import org.rogach.scallop.ScallopConf
 
 object PartitionPerformance {
-  def submitOnce(docType: String, channel: String, timestamp:String, minPartitions: Option[Int]) {
+  def submit(docType: String, channel: String, timestamp:String, minPartitions: Option[Int]) {
     val startTime = System.currentTimeMillis()
     val spark = SparkSession.builder.appName("ecole").getOrCreate()
     implicit val sc = spark.sparkContext
@@ -42,6 +42,6 @@ object PartitionPerformance {
       val minPartitions = opt[Int]("minPartitions", default=None)
       verify()
     }
-    submitOnce(opts.docType(), opts.channel(), opts.timestamp(), opts.minPartitions.toOption)
+    submit(opts.docType(), opts.channel(), opts.timestamp(), opts.minPartitions.toOption)
   }
 }
