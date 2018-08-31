@@ -30,7 +30,7 @@ Scala:
 docType, channel, and timestamp options are used in the call to `Dataset` to
 filter the data. The minPartitions option determines how the groupings will be
 set.
-2. Run the command `spark submit --master yarn --deploy-mode client --class com.mozilla.telemetry.PartitionPerformance <jar path> --docType <docType> --channel <channel>  --timestamp <timestamp> --minPartitions <minParitiions>
+2. Run the command `spark submit --master yarn --deploy-mode client --class com.mozilla.telemetry.PartitionPerformance <jar path> --docType <docType> --channel <channel>  --timestamp <timestamp> --minPartitions <minParitiions>`
 
 Python:
 1. Determine which docType, channel, timestamp, to use, as well as whether or
@@ -38,7 +38,7 @@ Python:
 docType, channel, and timestamp options are used in the call to `Dataset` to
 filter the data. the group_by option is set for the desired partition behavior.
 2. Run the command `spark-submit --master yarn --deploy-mide client
-   PartitionPerformance.py <docType> <channel> <timestamp> <group_by>
+   PartitionPerformance.py <docType> <channel> <timestamp> <group_by>`
 
 ## Results:
 Scala with Partition Behavior
