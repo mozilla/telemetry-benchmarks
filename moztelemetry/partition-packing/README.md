@@ -42,6 +42,7 @@ filter the data. the group_by option is set for the desired partition behavior.
 
 ## Results:
 Scala with Partition Behavior
+
 |Run   |Time (user)   |Time (system)   |Time (elapsed)   |
 |------|--------------|----------------|-----------------|
 |1     |33.68         |6.64            |2:29.79          |
@@ -55,7 +56,9 @@ Scala with Partition Behavior
 |9     |32.64         |7.04            |2:20.65          |
 |10    |32.97         |6.78            |2:17.22          |
 
+
 Scala with Default Behavior
+
 |Run   |Time (user)  |Time (system)   |Time (elapsed)    |
 |------|-------------|----------------|------------------|
 |1     |34.94        |7.61            |9:59.61           |
@@ -69,7 +72,9 @@ Scala with Default Behavior
 |9     |42.83        |7.76            |11:22.32          |
 |10    |33.48        |7.29            |11:22.54          |
 
+
 Python with Partition Behavior
+
 |Run   |Time (user)  |Time (system)  |Time (elapsed)     |
 |------|-------------|---------------|-------------------|
 |1     |53.94        |16.42          |2:42.39            |
@@ -83,7 +88,9 @@ Python with Partition Behavior
 |9     |57.31        |16.69          |2:24.58            |
 |10    |53.61        |17.00          |2:33.12            |
 
+
 Python with Default Behavior
+
 |Run   |Time (user)  |Time (system) |Time (elapsed)      |
 |------|-------------|--------------|--------------------|
 |1     |55.70        |16.62         |2:30.40             |
@@ -97,7 +104,9 @@ Python with Default Behavior
 |9     |54.83        |15.97         |2:26.36             |
 |10    |50.99        |14.86         |2:28.06             |
 
+
 Aggregated Results for Elapsed Time
+
 |Type of Performance|Mean   |Variance   |
 |-------------------|-------|-----------|
 |Scala Partition    |
