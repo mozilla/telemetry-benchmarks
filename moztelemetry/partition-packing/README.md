@@ -107,9 +107,9 @@ Python with Default Behavior
 
 Aggregated Results for Elapsed Time
 
-|Type of Performance|Mean   |Variance   |
-|-------------------|-------|-----------|
-|Scala Partition    |
-|Scala Default      |
-|Python Partition   |
-|Python Default     |
+|Type of Performance|Mean   |Standard Deviation   |
+|-------------------|-------|---------------------|
+|Scala Partition    |2:18.99|8.58                 |
+|Scala Default      |11:05.94|25.19               |
+|Python Partition   |2:38.52|10.03                |
+|Python Default     |2:27.49|3.51                 |
