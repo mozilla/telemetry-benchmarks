@@ -21,10 +21,10 @@ this directory compared to the home directory.
 ### To run with Bash script:
 Type `./run.sh` to execute the tests. The Bash script runs the Scala tests with `core` for docType, `nightly`
  for channel, `20180301` fortimestamp, and 6 or 0 for minPartitions. Python tests are run with the same
-parameters, except that rather than specify minPartitions, we specifiy either the `greedy` strategy or
+parameters, except that rather than specify minPartitions, we specify either the `greedy` strategy or
 `equal_size` for the partitioning behavior.
 
-### To run mannually:
+### To run manually:
 Scala:
 1. Determine which docType, channel, timestamp, and how many minPartitions are desired for the test. The
 docType, channel, and timestamp options are used in the call to `Dataset` to
@@ -36,7 +36,7 @@ Python:
 1. Determine which docType, channel, timestamp, to use, as well as whether or
    not to specify `greedy` or `equal_size` for the group_by option. The
 docType, channel, and timestamp options are used in the call to `Dataset` to
-filter the data. the group_by option is set for the desired partition behavior.
+filter the data. The group_by option is set for the desired partition behavior.
 2. Run the command `spark-submit --master yarn --deploy-mide client
    PartitionPerformance.py <docType> <channel> <timestamp> <group_by>`
 
@@ -113,3 +113,20 @@ Aggregated Results for Elapsed Time
 |Scala Default      |11:05.94|25.19               |
 |Python Partition   |2:38.52|10.03                |
 |Python Default     |2:27.49|3.51                 |
+
+
+## Discussion
+
+Adding algorithms for partitioning files into equal partitions showed
+improvement in Scala, but not in Python. In Scala, the equal partitions
+algorithm showed a significant improvement in elapsed time of the runtime of
+the program. The data gathered also has a much smaller standard deviation for
+partition behavior versus the default behavior, showing that the algorithm will
+produce a more consistent runtime.
+
+For the Python algorithm, the default algorithm has a better runtime than the
+new equal partition algorithm. Upon examining how the default algorithm works,
+this does make sense. The default algorithm in Python already partitions the
+data equally. The standard deviation of the default algorithm is also
+smaller, which means that the default algorithm can also be considered more
+reliable in terms of consistency of runtime.
