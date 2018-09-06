@@ -3,6 +3,9 @@
 This group of tests measures loading strategies for moztelemetry datasets. Partitions are made according to
 two different strategies, default behavior and equally sized groups.
 
+The link to the bug pertaining to this benchmark can be found here:
+https://bugzilla.mozilla.org/show_bug.cgi?id=1479113
+
 ## Background:
 We set up the tests in Scala and Python and compare the results of default
 behavior and equally sized groups in each language. The tests measure how long
@@ -119,13 +122,22 @@ Aggregated Results for Elapsed Time
 Adding algorithms for partitioning files into equal partitions showed
 improvement in Scala, but not in Python. In Scala, the equal partitions
 algorithm showed a significant improvement in elapsed time of the runtime of
-the program. The data gathered also has a much smaller standard deviation for
-partition behavior versus the default behavior, showing that the algorithm will
-produce a more consistent runtime.
+the program. The default Scala method runs four times slower than the partition
+method. The new method has a similar runtime as the Python algorithms. The data
+gathered also has a much smaller standard deviation for partition behavior versus the
+default behavior, showing that the algorithm will produce a more consistent runtime.
 
-For the Python algorithm, the default algorithm has a better runtime than the
-new equal partition algorithm. Upon examining how the default algorithm works,
+For the Python algorithm, the default algorithm and the equal partition
+algorithm have similar runtimes. Upon examining how the default algorithm works,
 this does make sense. The default algorithm in Python already partitions the
-data equally. The standard deviation of the default algorithm is also
-smaller, which means that the default algorithm can also be considered more
-reliable in terms of consistency of runtime.
+data equally. The standard deviations of the strategies are also similar,
+showing relatively similar consistencies in runtime.
+
+If we consider running these tests on larger datasets, for example,
+production-sized datasets, we can probably conclude that the partition strategy
+for Scala will save a signficant amount of time compared to the default
+strategy. Further testing should be done to determine the runtime when more
+than six nodes are needed for the amount of data, and also for when a very
+large file will need to be run in a separate partition. These tests were not
+able to account for this case given the dataset used. Overall, these results
+indicate strong motivations to switch to the partition strategy for Scala.
