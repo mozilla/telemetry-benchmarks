@@ -136,8 +136,14 @@ showing relatively similar consistencies in runtime.
 If we consider running these tests on larger datasets, for example,
 production-sized datasets, we can probably conclude that the partition strategy
 for Scala will save a signficant amount of time compared to the default
-strategy. Further testing should be done to determine the runtime when more
+strategy. I ran the Scala default and partition strategies once each with a
+larger dataset to get more information about my motivations. I ran the tests
+with a full day of data, so there was no filter on channel with 10 nodes in the
+cluster. The default strategy used 659 partitions and ran in about 30 minutes
+and 15 seconds. The partition strategy, set with 659 partitions, ran in about
+18 minutes and 45 seconds.
+
+Further testing should be done to determine the runtime when more
 than six nodes are needed for the amount of data, and also for when a very
-large file will need to be run in a separate partition. These tests were not
-able to account for this case given the dataset used. Overall, these results
+large file will need to be run in a separate partition. Overall, these results
 indicate strong motivations to switch to the partition strategy for Scala.
