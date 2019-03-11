@@ -13,3 +13,8 @@ should we use an Object representation instead? e.g.
 
 The big question is if we will be sending much more information over with that representation, after
 compression.
+
+## Results
+
+These benchmarks show a slight increase in size (~5%) when including the object-representation
+of the events. We can safely proceed with including them.
